@@ -440,12 +440,13 @@ mul!(C::StridedMatrix{T}, A::StridedMatrix{T}, B::Hermitian{T,<:StridedMatrix}) 
 *(adjA::Adjoint{<:Any,<:RealHermSymComplexHerm}, B::AbstractTriangular) = adjA.parent * B
 *(A::AbstractTriangular, adjB::Adjoint{<:Any,<:RealHermSymComplexHerm}) = A * adjB.parent
 
-for T in (:Symmetric, :Hermitian), op in (:*, :/)
-    # Deal with an ambiguous case
-    @eval ($op)(A::$T, x::Bool) = ($T)(($op)(A.data, x), sym_uplo(A.uplo))
-    S = T == :Hermitian ? :Real : :Number
-    @eval ($op)(A::$T, x::$S) = ($T)(($op)(A.data, x), sym_uplo(A.uplo))
-end
+# Scaling with Number
+*(A::Symmetric, x::Number) = Symmetric(A.data*x, Symbol(A.uplo))
+*(x::Number, A::Symmetric) = Symmetric(x*A.data, Symbol(A.uplo))
+*(A::Hermitian, x::Real) = Hermitian(A.data*x, Symbol(A.uplo))
+*(x::Real, A::Hermitian) = Hermitian(x*A.data, Symbol(A.uplo))
+/(A::Symmetric, x::Number) = Symmetric(A.data/x, Symbol(A.uplo))
+/(A::Hermitian, x::Real) = Hermitian(A.data/x, Symbol(A.uplo))
 
 function factorize(A::HermOrSym{T}) where T
     TT = typeof(sqrt(oneunit(T)))
